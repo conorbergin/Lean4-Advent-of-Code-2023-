@@ -1005,20 +1005,25 @@ nine8foursnczninednds
 seven443six8three31
 "
 
-
+def minput2 := "two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen"
 
 -- Part 1
 
-def toDigit (c:Char) : Option Nat := c.toNat |> (λ n => if n > 47 && n < 58 then some (n - 48) else none)
-
-
-def parseNatFromString (s:String) :=
-  match s.toList.filterMap toDigit with
+def buildNat? : List Nat → Option Nat
   | [] => none
   | xs => some (xs[0]!*10 + xs.getLast!)
 
+#eval buildNat? [1]
 
-#eval input.split (· = '\n') |> List.filterMap parseNatFromString |> List.foldl Add.add 0
+
+
+#eval input.splitOn "\n" |>.map (·.toList.filterMap (·.toString.toNat?)) |>.filterMap buildNat? |>.foldl Add.add 0
 
 
 -- Part 2
@@ -1035,25 +1040,20 @@ def numberMap : List ((List String) × Nat) := [
   (["nine", "9"],9)
 ]
 
-def findNatPrefix (s : String) := (numberMap.findSome? (λ m => if (m.fst.any (λ x => x.isPrefixOf s)) then some m.snd else none))
+#eval String.substrEq "hello" ⟨0⟩ "hello" ⟨0⟩ 4
 
-def findNumbers (s:String) := (List.range s.length).map (s.extract 0 s.endPos)  |> List.filterMap findNatPrefix
-
-def decreasingSubStr (s:String) : List Substring := (List.range s.length).map (λ n => ⟨s, ⟨n⟩ ⟨s.endPos⟩⟩)
-
-def hello := "hellod"
-
-def h2  := ⟨hello, ⟨1⟩, ⟨8⟩⟩
-
-
-#eval String.substrEq "hello" {1 : byteIdx} "hello" {1 : byteIdx} 3
-
-def parseNat2 (s:String) :=
-  let numbers := (List.range s.length).filterMap ( λ n => numberMap.find? (λ a => s.substrEq n a.fst.head! a.fst.head!.length ))
-  match numbers with
-  | [] => none
-  | xs => some (xs.head!*10 + xs.getLast!)
+partial def parseNat2 (s: String) :=
+  let rec loop (i: String.Pos) (l: List Nat) :=
+    let ln := numberMap.find? (λ t => t.fst.any (λ v => String.substrEq v ⟨0⟩ s i v.length ))
+    let l := match ln with
+      | some n => l ++ [n.snd]
+      | none => l
+    if s.atEnd i then
+      l
+    else
+      loop (s.next i) l
+  loop ⟨0⟩ []
 
 
 
-#eval (List.range 5).map (· * 2)
+#eval input.splitOn "\n" |>.map parseNat2 |>.filterMap buildNat? |>.foldl Add.add 0

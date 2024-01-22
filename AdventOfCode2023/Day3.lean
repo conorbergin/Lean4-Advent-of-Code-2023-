@@ -1,5 +1,4 @@
-def minput :=
-"467..114..
+def minput := "467..114..
 ...*......
 ..35..633.
 ......#...
@@ -152,3 +151,68 @@ def input := "..........................................389.314.................
 ........................................782...............665......................532.......................998...991.702.542....406.779..."
 
 -- Part 1
+def hello := "hello"
+
+inductive Item :Type
+| Number : Nat -> Item
+| Space : Item
+| Symbol : Item
+deriving Repr, BEq
+
+instance inhabitedItem : Inhabited Item :=
+  ⟨Item.Space⟩
+
+def a := Item.Number 4
+def b := Item.Space
+def c := Item.Symbol
+
+#eval c
+
+def parse (s:String) :=
+  s.trim.splitOn "\n"
+  |>.map (·.toList.map
+    (λ c => (if let some n := c.toString.toNat? then
+      Item.Number n
+    else if c == '.' then
+      Item.Space
+    else
+      Item.Symbol)))
+
+
+#eval parse minput
+
+def getIndexes (x_max y_max x y : Nat) :=
+  let east := x < x_max
+  let west := x > 0
+  let north := y < y_max
+  let south := y > 0
+  if east then [(x+1,y)] else []
+  ++ if west then [(x-1,y+1)] else []
+  ++ if north then [(x,y+1)] else []
+  ++ if south then [(x,y-1)] else []
+  ++ if east && north then [(x+1,y+1)] else []
+  ++ if west && north then [(x-1,y+1)] else []
+  ++ if east && south then [(x+1,y-1)] else []
+  ++ if west && south then [(x-1,y-1)] else []
+
+
+
+def findnumbers (ll: List (List Item)): Nat := Id.run do
+  let mut sum := 0
+  let x_max := ll.length
+  let y_max := ll.head!.length
+  for (i,row) in ll.enum do
+    for (j,it) in row.enum do
+      let idxs := getIndexes x_max y_max i j |>.map (fun (x,y) => ll.get! x |>.get! y )
+      if idxs.any (· == Item.Symbol) then
+        if let Item.Number n := it then
+          sum := n + sum
+  sum
+
+
+
+
+  -- ll.enum.map (λ (i,l) => l.enum.map
+  -- <| (λ ((j:Nat),(it:Item)) =>  getIndexes ll.length l.length i j |>.map (λ (x,y) => )))
+
+#eval findnumbers (parse minput)
