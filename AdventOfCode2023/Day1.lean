@@ -1,4 +1,4 @@
-import Inputs.Day1
+import AdventOfCode2023.Input.Day1
 
 def minput := "1abc2
 pqr3stu8vwx
