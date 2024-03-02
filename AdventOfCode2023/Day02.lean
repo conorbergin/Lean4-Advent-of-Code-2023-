@@ -1,4 +1,5 @@
-import AdventOfCode2023.Input.Day2
+
+def input := include_str "input" / "day02.txt"
 
 
 def minput :=
