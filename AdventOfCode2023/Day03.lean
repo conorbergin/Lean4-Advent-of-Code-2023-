@@ -11,51 +11,83 @@ def minput := "467..114..
 ...$.*....
 .664.598.."
 
+def minput2 :=
+"12.......*..
++.........34
+.......-12..
+..78........
+..*....60...
+78.........9
+.5.....23..$
+8...90*12...
+............
+2.2......12.
+.*.........*
+1.1..503+.56"
+
 -- Part 1
 
-inductive Token :Type
-| Number : Nat -> Token
-| Space : Token
-| Symbol : Token
-deriving Repr, BEq
 
-def getToken (c:Char) :=
-  if let some n := c.toString.toNat? then
-    Token.Number n
-  else if c == '.' then
-    Token.Space
-  else Token.Symbol
+def getSurrounding (i j length:Nat) := Id.run do
+  let mut result := []
+  for ii in [i-1:i+2] do
+    for jj in [j-1:j+1+length] do
+      result := result.concat (ii,jj)
+  result
+
+#eval getSurrounding 1 1 1
+
+def solveBoth (str :String) := Id.run do
+  let mut symIndex := []
+  let mut gearIndex := []
+  let mut numIndex : List (String×(Nat×Nat)) := []
 
 
--- #eval List.filter
--- hello
-def part1  (s:String) := Id.run do
-  let mut sum := []
+  for (i,line) in str.splitOn "\n" |>.enum do
 
-  let rows := s.splitOn "\n"
+    let mut state := none
 
-  for (i,row) in rows.enum do
+    for (j,c) in line.toList.enum do
+      if "0123456789".contains c then
 
-    let mut currentNumber : Option (Nat) := none
-
-    let prevRow := if i == 0 then none else some (rows.get! (i - 1))
-    let nextRow := if i == rows.length - 1 then none else some (rows.get! (i+1))
-
-    for (j,item) in row.toList.enum do
-
-      let token := getToken item
-      -- read number if exists
-      if let Token.Number n := token then
-        if let some m := currentNumber then
-          currentNumber := some (m*10 + n)
+        if let some s := state then
+          state := some (s.push c)
         else
-          currentNumber := some n
+          state := some c.toString
+      else
+        if let some s := state then
+          numIndex := numIndex.concat (s,(i,j-s.length))
+        state := none
+        if c != '.' then
+          symIndex := symIndex.concat (i,j)
+          if c == '*' then
+            gearIndex := gearIndex.concat (i,j)
+
+    if let some s := state then
+      numIndex := numIndex.concat (s,(i,line.length-s.length))
+
+
+  let part1 :=
+    numIndex
+    |>.filter (λ (n,(i,j)) =>
+      getSurrounding i j (n.length)
+      |>.any (symIndex.contains ·))
+    |>.foldl (λ acc (n,_) => acc + n.toNat!) 0
+
+  let part2 := Id.run do
+    let mut res := 0
+    for g in gearIndex do
+      let n := numIndex.filter (λ (n,(i,j)) =>
+        getSurrounding i j (n.length)
+        |>.any (g == ·))
+      if n.length == 2 then
+        res := res + (n[0]!.fst.toNat! * n[1]!.fst.toNat!)
+    return res
 
 
 
-  sum
-
-#eval part1 minput
+  return (part1,part2)
 
 
-#eval [1,2,3].map (fun x ↦ x+1)
+#eval solveBoth input
+#eval 530849 - 528369
